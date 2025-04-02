@@ -1,0 +1,170 @@
+Docker:
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+----- Building and Tagging the image
+
+build -t appteste .
+[+] Building 1.9s (11/11) FINISHED                                                        docker:desktop-linux
+ => [internal] load build definition from Dockerfile                                                      0.0s
+ => => transferring dockerfile: 202B                                                                      0.0s 
+ => [internal] load metadata for docker.io/library/python:latest                                          1.5s 
+ => [auth] library/python:pull token for registry-1.docker.io                                             0.0s
+ => [internal] load .dockerignore                                                                         0.0s
+ => => transferring context: 2B                                                                           0.0s 
+ => [1/5] FROM docker.io/library/python:latest@sha256:8c55c44b9e81d537f8404d0000b7331863d134db87c1385dd0  0.0s 
+ => => resolve docker.io/library/python:latest@sha256:8c55c44b9e81d537f8404d0000b7331863d134db87c1385dd0  0.0s 
+ => [internal] load build context                                                                         0.0s 
+ => => transferring context: 93B                                                                          0.0s 
+ => CACHED [2/5] WORKDIR /app                                                                             0.0s 
+ => CACHED [3/5] COPY requirements.txt .                                                                  0.0s 
+ => CACHED [4/5] RUN pip install --no-cache-dir -r requirements.txt                                       0.0s
+ => CACHED [5/5] COPY . .                                                                                 0.0s 
+ => exporting to image                                                                                    0.1s 
+ => => exporting layers                                                                                   0.0s 
+ => => exporting manifest sha256:22adcac0af43816326160783a3fc1ae2a46e90d27c577945e588b107d6395c30         0.0s 
+ => => exporting config sha256:c1ec615c8311369f985c2f7b473beef0f8c14872ff3ce06b96554346a1c0ca9f           0.0s 
+ => => exporting attestation manifest sha256:f04e965d6981ac1e00a07e97c4a16f0ee41799617a48b7ebcd2d54ec0df  0.0s 
+ => => exporting manifest list sha256:8c4d93b3a932f981a5b5c68223c1706bd5f7d3c3adbd23cb57e613079a359d36    0.0s 
+ => => naming to docker.io/library/appteste:latest                                                        0.0s 
+ => => unpacking to docker.io/library/appteste:latest                                                     0.0s 
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/u0zbrsai4t8pxlyidt073ibg5
+
+docker tag appteste appteste:v1.0
+
+----- Run the container using env-based port
+
+docker run -d -e port=5000 -p 5000:5000 appteste
+
+8c4d93b3a932f981a5b5c68223c1706bd5f7d3c3adbd23cb57e613079a359d36
+
+----- Inspect container and image
+
+docker ps
+CONTAINER ID   IMAGE      COMMAND           CREATED         STATUS         PORTS                    NAMES
+4b4ed40e09bb   appteste   "python app.py"   5 minutes ago   Up 5 minutes   0.0.0.0:5000->5000/tcp   awesome_per
+lman
+
+docker images
+appteste                               v1.0      8c4d93b3a932   47 hours ago   1.49GB
+
+----- Show container logs
+
+docker logs 4b4ed40e09bb
+ * Serving Flask app 'app'
+ * Debug mode: off
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server i
+nstead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.17.0.2:5000
+Press CTRL+C to quit
+172.17.0.1 - - [02/Apr/2025 22:01:19] "GET / HTTP/1.1" 200 -
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Kubernetes:
+---------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----Deploy with kubectl
+
+kubectl apply -f ConfigMap.yaml
+configmap/config-port created
+
+kubectl apply -f Deployment.yaml
+deployment.apps/app-k8s-deployment created
+
+kubectl apply -f Service.yaml
+service/app-k8s-service created
+
+kubectl apply -f Ingress.yaml
+ingress.networking.k8s.io/app-k8s-ingress created
+
+----- Show container logs
+
+kubectl logs app-k8s-deployment-7565b9b8cb-9hftq
+* Serving Flask app 'app'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://10.244.0.57:5000
+[33mPress CTRL+C to quit[0m
+
+----- Show deployed deployment yaml
+
+kubectl get deployment app-k8s-deployment -o yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    deployment.kubernetes.io/revision: "1"
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"apps/v1","kind":"Deployment","metadata":{"annotations":{},"labels":{"app":"app-teste"},"name":"app-k8s-deployment","namespace":"default"},"spec":{"replicas":3,"selector":{"matchLabels":{"app":"app-teste"}},"template":{"metadata":{"labels":{"app":"app-teste"}},"spec":{"containers":[{"envFrom":[{"configMapRef":{"name":"config-port"}}],"image":"tlheidrich/appteste:v1.0","name":"container-app-teste","ports":[{"containerPort":5000}],"resources":{"limits":{"cpu":"500m","memory":"512Mi"},"requests":{"cpu":"250m","memory":"256Mi"}}}]}}}}
+  creationTimestamp: "2025-04-02T22:39:11Z"
+  generation: 1
+  labels:
+    app: app-teste
+  name: app-k8s-deployment
+  namespace: default
+  resourceVersion: "81290"
+  uid: 143f2ed7-828a-46b3-b754-d12017b43f20
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 3
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: app-teste
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: app-teste
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: config-port
+        image: tlheidrich/appteste:v1.0
+        imagePullPolicy: IfNotPresent
+        name: container-app-teste
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+status:
+  availableReplicas: 3
+  conditions:
+  - lastTransitionTime: "2025-04-02T22:39:26Z"
+    lastUpdateTime: "2025-04-02T22:39:26Z"
+    message: Deployment has minimum availability.
+    reason: MinimumReplicasAvailable
+    status: "True"
+    type: Available
+  - lastTransitionTime: "2025-04-02T22:39:11Z"
+    lastUpdateTime: "2025-04-02T22:39:26Z"
+    message: ReplicaSet "app-k8s-deployment-7565b9b8cb" has successfully progressed.
+    reason: NewReplicaSetAvailable
+    status: "True"
+    type: Progressing
+  observedGeneration: 1
+  readyReplicas: 3
+  replicas: 3
+  updatedReplicas: 3
+

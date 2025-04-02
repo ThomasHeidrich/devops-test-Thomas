@@ -1,0 +1,20 @@
+What is IAM Role?
+	Is a set of permissions you can attribute to users, services or applications within the AWS environment.
+
+Security Group vs NACL?
+	Security Groups and NACL are both firewalls for the AWS subnet trafic control, but they work at different levels.
+	Security Groups is a stateful firewall for the EC2 Instances, wich verifies and allows inbound traffic, based on predetermined rules, and automatically allows the outbound traffic.
+	NACL is a stateless firewall for the entire subnet, wich verifies and allows or denies inbound and outbound traffic.
+
+S3 lifecycle rule use cases?
+	The most common use cases the the S3 lifecycle are: 
+	- Cost Optimization: Automatically sending rarely used data to less expensive storage classes;
+	-Managing temporary and obsolete data: Automatically deleting temporary files and older data;
+	-Managing versioning of apps: Automatically deletes or stores older versions of apps;
+	-Complying with data retention policies.
+
+What services manages DNS in AWS?
+	Route 53.
+
+What is the difference between SSM and SSH
+	SSM doesn't require an open port or SSH key and doesn't require a public IP to connect to private AWS Instances, wich makes it more secure for working within AWS Instances.

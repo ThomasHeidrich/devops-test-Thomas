@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-k8s-deployment
+  labels:
+    app: app-teste
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: app-teste
+  template:
+    metadata:
+      labels:
+        app: app-teste
+    spec:
+      containers:
+        - name: container-app-teste
+          image: tlheidrich/appteste:v1.0
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: config-port
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
